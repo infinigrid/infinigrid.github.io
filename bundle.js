@@ -48,6 +48,8 @@
 	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 	
+	var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 	
 	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
@@ -78,7 +80,7 @@
 	var GithubBadge = function GithubBadge() {
 	  return React.createElement(
 	    'a',
-	    { href: 'https://github.com/johnsusi/infinigrid' },
+	    { href: 'https://github.com/infinigrid/infinigrid' },
 	    React.createElement('img', { style: { position: 'absolute', top: 0, right: 0, border: 0, zIndex: 100 },
 	      src: 'https://camo.githubusercontent.com/a6677b08c955af8400f44c6298f40e7d19cc5b2d/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f677261795f3664366436642e706e67',
 	      alt: 'Fork me on GitHub',
@@ -114,23 +116,73 @@
 	  );
 	};
 	
+	var Identifiers = function Identifiers(_ref2) {
+	  var width = _ref2.width;
+	  var height = _ref2.height;
+	  var style = _ref2.style;
+	  var _ref2$model = _ref2.model;
+	  var _ref2$model$map = _ref2$model.map;
+	  var w = _ref2$model$map.width;
+	  var h = _ref2$model$map.height;
+	  var transform = _ref2$model.transform;
+	
+	  console.log(w, h);
+	  var points = [];
+	
+	  for (var r = -h; r < h; ++r) {
+	    for (var q = -w; q < w; ++q) {
+	      var qq = (q + w) % w;
+	      var rr = (r + h) % h;
+	      console.log(qq, rr, q, r);
+	      points.push([qq + rr * w, q, r]);
+	    }
+	  }
+	  return React.createElement(
+	    'svg',
+	    { width: width, height: height, style: style },
+	    points.map(function (_ref3) {
+	      var _ref4 = _slicedToArray(_ref3, 3);
+	
+	      var id = _ref4[0];
+	      var q = _ref4[1];
+	      var r = _ref4[2];
+	
+	      var _vec2$transformMat2d = vec2.transformMat2d([,,], [q, r], transform);
+	
+	      var _vec2$transformMat2d2 = _slicedToArray(_vec2$transformMat2d, 2);
+	
+	      var x = _vec2$transformMat2d2[0];
+	      var y = _vec2$transformMat2d2[1];
+	
+	      return React.createElement(
+	        'text',
+	        { x: x, y: y, fontSize: '48px', fill: 'white', textAnchor: 'middle' },
+	        id
+	      );
+	    })
+	  );
+	};
+	
 	var Demo = function (_React$Component) {
 	  _inherits(Demo, _React$Component);
 	
 	  function Demo(props) {
 	    _classCallCheck(this, Demo);
 	
+	    // tap(model => {
+	    //   model.map = {width: 2, height: 2, data: new Uint8Array([255,255,255,255, 255,0,0,255, 0,255,0,255, 0,0,255,255 ])};
+	    // }).
+	
 	    var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(Demo).call(this, props));
 	
 	    _this.state = {
-	      model: new Model().randomizeMap(128).fitCellInViewport([0, 0], [0, 0, window.innerWidth, window.innerHeight])
+	      model: new Model().fitCellInViewport([0, 0], [0, 0, window.innerWidth, window.innerHeight])
 	    };
 	
 	    _this.image = new Image();
 	    _this.image.src = 'world.jpg';
 	    _this.image.onload = function () {
-	      console.log('loaded');
-	      _this.setState({ model: _this.state.model.mapFromImage(512, 512, _this.image) });
+	      _this.setState({ model: _this.state.model.mapFromImage(1024, 1024, _this.image).fitNCellsInViewport(512, [0, 0, window.innerWidth, window.innerHeight]) });
 	    };
 	    return _this;
 	  }
@@ -140,27 +192,28 @@
 	    value: function render() {
 	      var _this2 = this;
 	
-	      console.log('render: %O', this.state.model.map);
 	      return React.createElement(
 	        'div',
 	        null,
 	        React.createElement(GithubBadge, null),
 	        React.createElement(
 	          'div',
-	          { className: 'overlay', style: { zIndex: 1 } },
+	          { className: 'overlay', style: { zIndex: 1, display: 'none' } },
 	          React.createElement(Logo, null)
 	        ),
 	        React.createElement(Toolbar, {
 	          onFitCellInViewport: function onFitCellInViewport(event) {
-	            return _this2.setState({ model: model.fitCellInViewport() });
+	            return _this2.setState({ model: _this2.state.model.fitCellInViewport([0, 0], [0, 0, window.innerWidth, window.innerHeight]) });
 	          },
 	          onFitMapInViewport: function onFitMapInViewport(event) {
-	            return _this2.setState({ model: model.fitMapInViewport() });
+	            return _this2.setState({ model: _this2.state.model.fitMapInViewport([0, 0, window.innerWidth, window.innerHeight]) });
 	          }
 	        }),
 	        React.createElement(
 	          Viewport,
-	          { model: this.state.model },
+	          { model: this.state.model, onClickCell: function onClickCell(q, r) {
+	              return console.log(q, r);
+	            } },
 	          React.createElement(Grid, null)
 	        )
 	      );
@@ -6756,33 +6809,57 @@
 	  value: true
 	});
 	
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+	
 	var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
 	
-	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+	function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 	
 	var _require = __webpack_require__(1);
 	
+	var vec2 = _require.vec2;
 	var mat2d = _require.mat2d;
 	
 	
 	var K = Math.sqrt(3);
 	
-	// Map: { width, height, data: [] }
+	function _distanceBetweenCells(transform) {
+	  var _vec2$transformMat2d = vec2.transformMat2d([,,], [0, 0], transform);
+	
+	  var _vec2$transformMat2d2 = _slicedToArray(_vec2$transformMat2d, 2);
+	
+	  var x1 = _vec2$transformMat2d2[0];
+	  var y1 = _vec2$transformMat2d2[1];
+	
+	  var _vec2$transformMat2d3 = vec2.transformMat2d([,,], [1, 1], transform);
+	
+	  var _vec2$transformMat2d4 = _slicedToArray(_vec2$transformMat2d3, 2);
+	
+	  var x2 = _vec2$transformMat2d4[0];
+	  var y2 = _vec2$transformMat2d4[1];
+	
+	  return Math.sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
+	}
 	
 	var Model = exports.Model = function () {
 	  function Model() {
-	    var transform = arguments.length <= 0 || arguments[0] === undefined ? mat2d.create() : arguments[0];
-	    var map = arguments.length <= 1 || arguments[1] === undefined ? { width: 1, height: 1, data: [0, 0, 0, 255] } : arguments[1];
-	
 	    _classCallCheck(this, Model);
-	
-	    this.transform = transform;
-	    this.map = map;
 	  }
 	
 	  _createClass(Model, [{
+	    key: 'tap',
+	    value: function tap(cb) {
+	      cb(this);
+	      return this;
+	    }
+	  }, {
+	    key: 'distanceBetweenCells',
+	    value: function distanceBetweenCells() {
+	      _distanceBetweenCells(this.transform);
+	    }
+	  }, {
 	    key: 'randomizeMap',
 	    value: function randomizeMap(width) {
 	      var height = arguments.length <= 1 || arguments[1] === undefined ? width : arguments[1];
@@ -6791,38 +6868,128 @@
 	      window.crypto.getRandomValues(data);
 	      for (var i = 0; i < width * height; ++i) {
 	        data[i * 4 + 3] = 255;
-	      }return new Model(this.transform, { width: width, height: height, data: data });
+	      }var map = { width: width, height: height, data: data };
+	      return Object.assign(new Model(), this, { map: map });
 	    }
 	  }, {
 	    key: 'mapFromImage',
 	    value: function mapFromImage(width, height, image) {
+	      var sw = image.width;
+	      var sh = image.height;
 	      var canvas = document.createElement('canvas');
-	      canvas.width = image.width;
-	      canvas.height = image.height;
+	      canvas.width = sw;
+	      canvas.height = sh;
 	      var g = canvas.getContext('2d');
 	      g.drawImage(image, 0, 0);
-	      var pixels = g.getImageData(0, 0, canvas.width, canvas.height);
+	      var pixels = g.getImageData(0, 0, sw, sh);
 	      var data = new Uint8Array(width * height * 4);
-	
-	      console.log(width, height, image.width, image.height, canvas.width, canvas.height, pixels.width, pixels.height);
 	
 	      var N = Math.floor(width / 2);
 	      var M = Math.floor(height / 2);
-	      var K1 = pixels.height / (Math.sqrt(3) * height);
-	      var K2 = -pixels.height / height;
+	      var K0 = sw / height;
+	      var K1 = K0 / Math.sqrt(3);
+	      var K2 = -K0;
+	
 	      for (var r = -height / 2; r < height / 2; ++r) {
 	        for (var q = -width / 2; q < width / 2; ++q) {
-	          var x = (Math.floor((q + r) * K1 + pixels.width / 2) + pixels.width) % pixels.width;
-	          var y = (Math.floor((q - r) * K2 + pixels.height / 2) + pixels.height) % pixels.height;
-	          var qr = ((q + width) % width + (r + height) % height * width) * 4;
-	          var xy = (x + y * pixels.width) * 4;
-	          data[qr + 0] = pixels.data[xy + 0];
-	          data[qr + 1] = pixels.data[xy + 1];
-	          data[qr + 2] = pixels.data[xy + 2];
-	          data[qr + 3] = pixels.data[xy + 3];
+	          var x = Math.floor((q + r) * K1 + sw / 2);
+	          var y = Math.floor((q - r) * K2 + sh / 2);
+	
+	          if (q < 0 && q - r < -width / 2) {
+	
+	            var qqq = width + q;
+	            x = Math.floor((qqq + r) * K1 + sw / 2);
+	            y = Math.floor((qqq - r) * K2 + sh / 2);
+	          }
+	          if (r < 0 && r - q < -height / 2) {
+	
+	            var _qqq = -width + q;
+	            x = Math.floor((_qqq + r) * K1 + sw / 2);
+	            y = Math.floor((_qqq - r) * K2 + sh / 2);
+	          }
+	          var xx = x;
+	          var yy = y;
+	          var qq = (q + width) % width;
+	          var rr = (r + height) % height;
+	          var qr = (qq + rr * width) * 4;
+	          var xy = (xx + yy * sw) * 4;
+	
+	          // if (x < 0 || x > pixels.width || y < 0 || y > pixels.height)
+	          // console.log(q, r, x, y);
+	          // console.log(qq, rr, xx, yy);
+	
+	          var cr = pixels.data[xy + 0];
+	          var cg = pixels.data[xy + 1];
+	          var cb = pixels.data[xy + 2];
+	
+	          // if (q == 0 || r == 0) cr = cg = cb = 255;
+	          data[qr + 0] = cr;
+	          data[qr + 1] = cg;
+	          data[qr + 2] = cb;
+	          data[qr + 3] = 255;
 	        }
 	      }
-	      return new Model(this.transform, { width: width, height: height, data: data });
+	
+	      // for (let r = height/2;r < 3*height/4;++r) {
+	      //   for (let q = width/4;q < width/2;++q) {
+	      //
+	      //     const x =  Math.floor( (q + r) * K1 + sw / 2);
+	      //     const y =  Math.floor( (q - r) * K2 + sh / 2);
+	      //     const xy = (x + y * sw) * 4;
+	      //
+	      //     // if (x < 0 || x > pixels.width || y < 0 || y > pixels.height)
+	      //     // console.log(q, r, x, y);
+	      //     // console.log(qq, rr, xx, yy);
+	      //
+	      //     let cr = pixels.data[xy + 0];
+	      //     let cg = pixels.data[xy + 1];
+	      //     let cb = pixels.data[xy + 2];
+	      //
+	      //
+	      //     const qr = (q + r * width) * 4;
+	      //     data[qr+0] = cr;
+	      //     data[qr+1] = cg;
+	      //     data[qr+2] = cb;
+	      //     data[qr+3] = 255;
+	      //   }
+	      // }
+	      // for (let r = height/4;r < height/2;++r) {
+	      //   for (let q = width/2;q < 3*width/4;++q) {
+	      //
+	      //     const x =  Math.floor( (q + r) * K1 + sw / 2);
+	      //     const y =  Math.floor( (q - r) * K2 + sh / 2);
+	      //     const xy = (x + y * sw) * 4;
+	      //
+	      //     // if (x < 0 || x > pixels.width || y < 0 || y > pixels.height)
+	      //     // console.log(q, r, x, y);
+	      //     // console.log(qq, rr, xx, yy);
+	      //
+	      //     let cr = pixels.data[xy + 0];
+	      //     let cg = pixels.data[xy + 1];
+	      //     let cb = pixels.data[xy + 2];
+	      //
+	      //
+	      //     const qr = (q + r * width) * 4;
+	      //     data[qr+0] = cr;
+	      //     data[qr+1] = cg;
+	      //     data[qr+2] = cb ;
+	      //     data[qr+3] = 255;
+	      //   }
+	      // }
+	      var map = { width: width, height: height, data: data };
+	      return Object.assign(new Model(), this, { map: map });
+	    }
+	  }, {
+	    key: 'fitNCellsInViewport',
+	    value: function fitNCellsInViewport(N, viewport) {
+	      var _viewport = _slicedToArray(viewport, 4);
+	
+	      var w = _viewport[2];
+	      var h = _viewport[3];
+	
+	      var K = Math.sqrt(3);
+	      var transform = mat2d.fromValues(h / (K * N), -h / N, h / (K * N), h / N, w / 2, h / 2);
+	      return Object.assign(new Model(), this, { transform: transform });
 	    }
 	  }, {
 	    key: 'fitCellInViewport',
@@ -6832,17 +6999,13 @@
 	      var q = _cell[0];
 	      var r = _cell[1];
 	
-	      var _viewport = _slicedToArray(viewport, 4);
-	
-	      var w = _viewport[2];
-	      var h = _viewport[3];
-	
-	      var transform = mat2d.fromValues(h / (2 * K), -h / 2, h / (2 * K), h / 2, w / 2, h / 2);
-	      return new Model(transform, this.map);
+	      return this.fitNCellsInViewport(2, viewport);
 	    }
 	  }, {
 	    key: 'fitMapInViewport',
-	    value: function fitMapInViewport(viewport) {}
+	    value: function fitMapInViewport(viewport) {
+	      return this.fitNCellsInViewport(this.map.width, viewport);
+	    }
 	  }, {
 	    key: 'centerOnCell',
 	    value: function centerOnCell(cell, viewport) {}
@@ -6865,7 +7028,7 @@
 	      var dy = (y1 + y2) / 2;
 	      var s = h / (y2 - y1);
 	      var transform = mat2d.mul(mat2d.create(), [s, 0, 0, s, s * (1 - dx) + w / 2, s * (1 - dy) + h / 2], this.transform);
-	      return new Model(transform, this.map);
+	      return Object.assign(new Model(), this, { transform: transform });
 	    }
 	  }, {
 	    key: 'zoomToPoint',
@@ -6881,19 +7044,83 @@
 	      mat2d.mul(transform, [1, 0, 0, 1, -x, -y], this.transform);
 	      mat2d.mul(transform, [s, 0, 0, s, 0, 0], transform);
 	      mat2d.mul(transform, [1, 0, 0, 1, x, y], transform);
-	      return new Model(transform, this.map);
+	
+	      return Object.assign(new Model(), this, { transform: this.zoomStrategy(transform) });
 	    }
 	  }, {
 	    key: 'pan',
 	    value: function pan(dx, dy) {
 	      var transform = mat2d.create();
 	      mat2d.mul(transform, [1, 0, 0, 1, dx, dy], this.transform);
-	      return new Model(transform, this.map);
+	      return Object.assign(new Model(), this, { transform: transform });
+	    }
+	  }, {
+	    key: 'gridSizeStrategy',
+	    get: function get() {
+	      return this._gridSizeStrategy.bind(this);
+	    },
+	    set: function set(strategy) {
+	      var _this = this;
+	
+	      this._gridSizeStrategy = function () {
+	        return strategy(_this.distanceBetweenCells());
+	      };
+	    }
+	  }, {
+	    key: 'gridColorStrategy',
+	    get: function get() {
+	      return this._gridColorStrategy.bind(this);
+	    },
+	    set: function set(strategy) {
+	      var _this2 = this;
+	
+	      this._gridSizeStrategy = function () {
+	        return strategy(_this2.distanceBetweenCells());
+	      };
+	    }
+	  }, {
+	    key: 'zoomStrategy',
+	    get: function get() {
+	      return this._zoomStrategy.bind(this);
+	    },
+	    set: function set(strategy) {
+	      var _this3 = this;
+	
+	      this._zoomStrategy = function (newTransform) {
+	        return strategy(_this3.distanceBetweenCells(), _this3.transform, newTransform);
+	      };
 	    }
 	  }]);
-
+	
 	  return Model;
 	}();
+	
+	// Defaults
+	
+	Model.prototype.transform = mat2d.create();
+	Model.prototype.map = null; //{width: 1, height: 1, data: new Uint8Array([0, 0, 0, 255])};
+	
+	// Grid
+	Model.prototype.gridSize = 0.05;
+	Model.prototype.gridColor = [1.0, 1.0, 1.0];
+	Model.prototype.gridMin = 16.0;
+	Model.prototype.gridMax = 64.0;
+	Model.prototype._gridSizeStrategy = function () {
+	  return this.gridSize;
+	};
+	Model.prototype._gridColorStrategy = function () {
+	  var d = _distanceBetweenCells(this.transform);
+	  var alpha = Math.min(Math.max(1.0 - (d - this.gridMin) / (this.gridMax - this.gridMin), 0.0), 1.0);
+	  return [].concat(_toConsumableArray(this.gridColor), [alpha]); //.slice(0,3).concat(alpha);
+	};
+	
+	// Zoom
+	Model.prototype.zoomMin = 1; // Cells will be at least one pixel apart
+	Model.prototype.zoomMax = 1024; // Cells will at most be 128 pixels apart
+	Model.prototype._zoomStrategy = function (newTransform) {
+	  var d = _distanceBetweenCells(newTransform);
+	  if (d < this.zoomMin || d > this.zoomMax) return this.transform;else return newTransform;
+	};
 
 /***/ },
 /* 13 */
@@ -6960,12 +7187,12 @@
 	          var model = _this.state.model.fitRectInViewport(rect, viewport);
 	          _this.setState({ model: model });
 	
-	          var dx = (_this.state.x + x) / 2;
-	          var dy = (_this.state.y + y) / 2;
-	          var s = _this.state.height / _this.state.selection.height;
-	          var transform = mat2d.create();
-	          mat2d.mul(transform, [s, 0, 0, s, s * (1 - dx) + _this.state.width / 2, s * (1 - dy) + _this.state.height / 2], _this.state.transform);
-	          _this.setState({ x: x, y: y, transform: transform });
+	          // const dx = (this.state.x + x)/2;
+	          // const dy = (this.state.y + y)/2;
+	          // const s  = this.state.height / this.state.selection.height;
+	          // const transform = mat2d.create();
+	          // mat2d.mul(transform, [s, 0, 0, s, s*(1-dx) + this.state.width/2, s*(1-dy) + this.state.height/2], this.state.transform);
+	          // this.setState({ x, y, transform });
 	        }
 	        _this.setState({ dragging: false, selecting: false });
 	      },
@@ -6980,7 +7207,7 @@
 	          _this.setState({ x: x, y: y, model: model });
 	        } else if (_this.state.selecting) {
 	          // draw box
-	          _this.setState({ selection: { width: x - _this.state.x, height: y - _this.state.y } });
+	          _this.setState({ selection: { width: Math.abs(x - _this.state.x), height: Math.abs(y - _this.state.y) } });
 	        }
 	      },
 	      onWheel: function onWheel(event) {
@@ -10975,7 +11202,11 @@
 	  value: true
 	});
 	
+	var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+	
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+	
+	function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 	
@@ -10992,10 +11223,11 @@
 	var mat3 = _require.mat3;
 	
 	
-	var N = 512;
-	var M = 512;
 	var vs = '\nattribute highp vec2 a_xy;\nattribute highp vec2 a_qr;\n\nuniform mat3 u_transform;\n\nvarying highp vec2 v_qr;\n\nvoid main(void) {\n  gl_Position = vec4(a_xy, 0.0, 1.0);\n  v_qr = (u_transform * vec3(a_qr, 1.0)).xy;\n}\n';
-	var fs = '\nprecision highp float;\n\nvarying highp vec2 v_qr;\n\nconst float N = float(' + N + ');\nconst float M = float(' + M + ');\n\nuniform sampler2D u_map;\n\n//\n// Description : Array and textureless GLSL 2D simplex noise function.\n//      Author : Ian McEwan, Ashima Arts.\n//  Maintainer : stegu\n//     Lastmod : 20110822 (ijm)\n//     License : Copyright (C) 2011 Ashima Arts. All rights reserved.\n//               Distributed under the MIT License. See LICENSE file.\n//               https://github.com/ashima/webgl-noise\n//               https://github.com/stegu/webgl-noise\n//\n\nvec3 mod289(vec3 x) {\n  return x - floor(x * (1.0 / 289.0)) * 289.0;\n}\n\nvec2 mod289(vec2 x) {\n  return x - floor(x * (1.0 / 289.0)) * 289.0;\n}\n\nvec3 permute(vec3 x) {\n  return mod289(((x*34.0)+1.0)*x);\n}\n\nfloat snoise(vec2 v)\n  {\n  const vec4 C = vec4(0.211324865405187,  // (3.0-sqrt(3.0))/6.0\n                      0.366025403784439,  // 0.5*(sqrt(3.0)-1.0)\n                     -0.577350269189626,  // -1.0 + 2.0 * C.x\n                      0.024390243902439); // 1.0 / 41.0\n// First corner\n  vec2 i  = floor(v + dot(v, C.yy) );\n  vec2 x0 = v -   i + dot(i, C.xx);\n\n// Other corners\n  vec2 i1;\n  //i1.x = step( x0.y, x0.x ); // x0.x > x0.y ? 1.0 : 0.0\n  //i1.y = 1.0 - i1.x;\n  i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);\n  // x0 = x0 - 0.0 + 0.0 * C.xx ;\n  // x1 = x0 - i1 + 1.0 * C.xx ;\n  // x2 = x0 - 1.0 + 2.0 * C.xx ;\n  vec4 x12 = x0.xyxy + C.xxzz;\n  x12.xy -= i1;\n\n// Permutations\n  i = mod289(i); // Avoid truncation effects in permutation\n  vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 ))\n\t\t+ i.x + vec3(0.0, i1.x, 1.0 ));\n\n  vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0);\n  m = m*m ;\n  m = m*m ;\n\n// Gradients: 41 points uniformly over a line, mapped onto a diamond.\n// The ring size 17*17 = 289 is close to a multiple of 41 (41*7 = 287)\n\n  vec3 x = 2.0 * fract(p * C.www) - 1.0;\n  vec3 h = abs(x) - 0.5;\n  vec3 ox = floor(x + 0.5);\n  vec3 a0 = x - ox;\n\n// Normalise gradients implicitly by scaling m\n// Approximation of: m *= inversesqrt( a0*a0 + h*h );\n  m *= 1.79284291400159 - 0.85373472095314 * ( a0*a0 + h*h );\n\n// Compute final noise value at P\n  vec3 g;\n  g.x  = a0.x  * x0.x  + h.x  * x0.y;\n  g.yz = a0.yz * x12.xz + h.yz * x12.yw;\n  return 130.0 * dot(m, g);\n}\n\nfloat fbm(vec2 P, int octaves, float lacunarity, float gain)\n{\n   float sum = 0.0;\n   float amp = 1.0;\n   vec2 pp = P;\n\n   int i;\n\n   for(i = 0; i < octaves; i+=1)\n   {\n       amp *= gain;\n       sum += amp * snoise(pp);\n       pp *= lacunarity;\n   }\n   return sum;\n\n}\n\nvoid main(void) {\n\n  vec2 uv = vec2(floor(v_qr.x), floor(v_qr.y));\n\n  float q = fract(v_qr.x);\n  float r = fract(v_qr.y);\n\n  if (q - r > 0.0) {\n    float a = 1.0 - q;\n    float b = q - r;\n    float c = 1.0 - a - b;\n           if (b > a && b > c) uv += vec2(1.0, 0.0);\n      else if (c > a && c > b) uv += vec2(1.0, 1.0);\n  }\n  else {\n    float a = 1.0 - r;\n    float c = q;\n    float d = 1.0 - a - c;\n           if (c > a && c > d) uv += vec2(1.0, 1.0);\n      else if (d > a && d > c) uv += vec2(0.0, 1.0);\n  }\n  gl_FragColor = texture2D(u_map, vec2(uv.x / N, uv.y/M));\n}\n';
+	var noiseSource = '\n//\n// Description : Array and textureless GLSL 2D/3D/4D simplex\n//               noise functions.\n//      Author : Ian McEwan, Ashima Arts.\n//  Maintainer : stegu\n//     Lastmod : 20110822 (ijm)\n//     License : Copyright (C) 2011 Ashima Arts. All rights reserved.\n//               Distributed under the MIT License. See LICENSE file.\n//               https://github.com/ashima/webgl-noise\n//               https://github.com/stegu/webgl-noise\n//\n\nvec4 mod289(vec4 x) {\n  return x - floor(x * (1.0 / 289.0)) * 289.0; }\n\nfloat mod289(float x) {\n  return x - floor(x * (1.0 / 289.0)) * 289.0; }\n\nvec4 permute(vec4 x) {\n     return mod289(((x*34.0)+1.0)*x);\n}\n\nfloat permute(float x) {\n     return mod289(((x*34.0)+1.0)*x);\n}\n\nvec4 taylorInvSqrt(vec4 r)\n{\n  return 1.79284291400159 - 0.85373472095314 * r;\n}\n\nfloat taylorInvSqrt(float r)\n{\n  return 1.79284291400159 - 0.85373472095314 * r;\n}\n\nvec4 grad4(float j, vec4 ip)\n  {\n  const vec4 ones = vec4(1.0, 1.0, 1.0, -1.0);\n  vec4 p,s;\n\n  p.xyz = floor( fract (vec3(j) * ip.xyz) * 7.0) * ip.z - 1.0;\n  p.w = 1.5 - dot(abs(p.xyz), ones.xyz);\n  s = vec4(lessThan(p, vec4(0.0)));\n  p.xyz = p.xyz + (s.xyz*2.0 - 1.0) * s.www;\n\n  return p;\n  }\n\n// (sqrt(5) - 1)/4 = F4, used once below\n#define F4 0.309016994374947451\n\nvec3 mod289(vec3 x) {\n  return x - floor(x * (1.0 / 289.0)) * 289.0;\n}\n\nvec2 mod289(vec2 x) {\n  return x - floor(x * (1.0 / 289.0)) * 289.0;\n}\n\nvec3 permute(vec3 x) {\n  return mod289(((x*34.0)+1.0)*x);\n}\n\n\nfloat snoise2(vec2 v)\n  {\n  const vec4 C = vec4(0.211324865405187,  // (3.0-sqrt(3.0))/6.0\n                      0.366025403784439,  // 0.5*(sqrt(3.0)-1.0)\n                     -0.577350269189626,  // -1.0 + 2.0 * C.x\n                      0.024390243902439); // 1.0 / 41.0\n// First corner\n  vec2 i  = floor(v + dot(v, C.yy) );\n  vec2 x0 = v -   i + dot(i, C.xx);\n\n// Other corners\n  vec2 i1;\n  //i1.x = step( x0.y, x0.x ); // x0.x > x0.y ? 1.0 : 0.0\n  //i1.y = 1.0 - i1.x;\n  i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);\n  // x0 = x0 - 0.0 + 0.0 * C.xx ;\n  // x1 = x0 - i1 + 1.0 * C.xx ;\n  // x2 = x0 - 1.0 + 2.0 * C.xx ;\n  vec4 x12 = x0.xyxy + C.xxzz;\n  x12.xy -= i1;\n\n// Permutations\n  i = mod289(i); // Avoid truncation effects in permutation\n  vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 ))\n\t\t+ i.x + vec3(0.0, i1.x, 1.0 ));\n\n  vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy,x12.xy), dot(x12.zw,x12.zw)), 0.0);\n  m = m*m ;\n  m = m*m ;\n\n// Gradients: 41 points uniformly over a line, mapped onto a diamond.\n// The ring size 17*17 = 289 is close to a multiple of 41 (41*7 = 287)\n\n  vec3 x = 2.0 * fract(p * C.www) - 1.0;\n  vec3 h = abs(x) - 0.5;\n  vec3 ox = floor(x + 0.5);\n  vec3 a0 = x - ox;\n\n// Normalise gradients implicitly by scaling m\n// Approximation of: m *= inversesqrt( a0*a0 + h*h );\n  m *= 1.79284291400159 - 0.85373472095314 * ( a0*a0 + h*h );\n\n// Compute final noise value at P\n  vec3 g;\n  g.x  = a0.x  * x0.x  + h.x  * x0.y;\n  g.yz = a0.yz * x12.xz + h.yz * x12.yw;\n  return 130.0 * dot(m, g);\n}\n\nfloat snoise(vec4 v)\n  {\n  const vec4  C = vec4( 0.138196601125011,  // (5 - sqrt(5))/20  G4\n                        0.276393202250021,  // 2 * G4\n                        0.414589803375032,  // 3 * G4\n                       -0.447213595499958); // -1 + 4 * G4\n\n// First corner\n  vec4 i  = floor(v + dot(v, vec4(F4)) );\n  vec4 x0 = v -   i + dot(i, C.xxxx);\n\n// Other corners\n\n// Rank sorting originally contributed by Bill Licea-Kane, AMD (formerly ATI)\n  vec4 i0;\n  vec3 isX = step( x0.yzw, x0.xxx );\n  vec3 isYZ = step( x0.zww, x0.yyz );\n//  i0.x = dot( isX, vec3( 1.0 ) );\n  i0.x = isX.x + isX.y + isX.z;\n  i0.yzw = 1.0 - isX;\n//  i0.y += dot( isYZ.xy, vec2( 1.0 ) );\n  i0.y += isYZ.x + isYZ.y;\n  i0.zw += 1.0 - isYZ.xy;\n  i0.z += isYZ.z;\n  i0.w += 1.0 - isYZ.z;\n\n  // i0 now contains the unique values 0,1,2,3 in each channel\n  vec4 i3 = clamp( i0, 0.0, 1.0 );\n  vec4 i2 = clamp( i0-1.0, 0.0, 1.0 );\n  vec4 i1 = clamp( i0-2.0, 0.0, 1.0 );\n\n  //  x0 = x0 - 0.0 + 0.0 * C.xxxx\n  //  x1 = x0 - i1  + 1.0 * C.xxxx\n  //  x2 = x0 - i2  + 2.0 * C.xxxx\n  //  x3 = x0 - i3  + 3.0 * C.xxxx\n  //  x4 = x0 - 1.0 + 4.0 * C.xxxx\n  vec4 x1 = x0 - i1 + C.xxxx;\n  vec4 x2 = x0 - i2 + C.yyyy;\n  vec4 x3 = x0 - i3 + C.zzzz;\n  vec4 x4 = x0 + C.wwww;\n\n// Permutations\n  i = mod289(i);\n  float j0 = permute( permute( permute( permute(i.w) + i.z) + i.y) + i.x);\n  vec4 j1 = permute( permute( permute( permute (\n             i.w + vec4(i1.w, i2.w, i3.w, 1.0 ))\n           + i.z + vec4(i1.z, i2.z, i3.z, 1.0 ))\n           + i.y + vec4(i1.y, i2.y, i3.y, 1.0 ))\n           + i.x + vec4(i1.x, i2.x, i3.x, 1.0 ));\n\n// Gradients: 7x7x6 points over a cube, mapped onto a 4-cross polytope\n// 7*7*6 = 294, which is close to the ring size 17*17 = 289.\n  vec4 ip = vec4(1.0/294.0, 1.0/49.0, 1.0/7.0, 0.0) ;\n\n  vec4 p0 = grad4(j0,   ip);\n  vec4 p1 = grad4(j1.x, ip);\n  vec4 p2 = grad4(j1.y, ip);\n  vec4 p3 = grad4(j1.z, ip);\n  vec4 p4 = grad4(j1.w, ip);\n\n// Normalise gradients\n  vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2, p2), dot(p3,p3)));\n  p0 *= norm.x;\n  p1 *= norm.y;\n  p2 *= norm.z;\n  p3 *= norm.w;\n  p4 *= taylorInvSqrt(dot(p4,p4));\n\n// Mix contributions from the five corners\n  vec3 m0 = max(0.6 - vec3(dot(x0,x0), dot(x1,x1), dot(x2,x2)), 0.0);\n  vec2 m1 = max(0.6 - vec2(dot(x3,x3), dot(x4,x4)            ), 0.0);\n  m0 = m0 * m0;\n  m1 = m1 * m1;\n  return 49.0 * ( dot(m0*m0, vec3( dot( p0, x0 ), dot( p1, x1 ), dot( p2, x2 )))\n               + dot(m1*m1, vec2( dot( p3, x3 ), dot( p4, x4 ) ) ) ) ;\n\n  }\n';
+	
+	var gridSource = '\nprecision highp float;\n\nvarying highp vec2 v_qr;\n\nuniform sampler2D u_map;\nuniform int u_N;\nuniform float u_EDGE;\nuniform vec4 u_EDGE_COLOR;\n\nvoid main(void) {\n\n  float N = float(u_N);\n  vec2 uv = vec2(floor(v_qr.x) / N, floor(v_qr.y) / N);\n\n  float q = fract(v_qr.x);\n  float r = fract(v_qr.y);\n\n  if (q - r > 0.0) {\n    float a = 1.0 - q;\n    float b = q - r;\n    float c = 1.0 - a - b;\n\n    gl_FragColor = f(a, b, uv, uv + vec2(1.0/N, 0.0), uv + vec2(1.0/N, 1.0/N));\n\n  }\n  else {\n    float a = 1.0 - r;\n    float d = r - q;\n    float c = 1.0 - a - d;\n    gl_FragColor = f(a, c, uv, uv + vec2(1.0/N, 1.0/N), uv + vec2(0.0, 1.0/N));\n  }\n}\n\n';
+	var fs = '\nprecision highp float;\n\nvarying highp vec2 v_qr;\n\nuniform sampler2D u_map;\nuniform int u_N;\nuniform float u_EDGE;\nuniform vec4 u_EDGE_COLOR;\n\n' + noiseSource + '\n\nfloat fbm(vec2 p, int octaves, float lacunarity, float gain) {\n  float sum = 0.0;\n  float amp = 1.0;\n  vec2 pp = p;\n\n  for(int i = 0; i < 1; i+=1)\n  {\n    amp *= gain;\n    sum += amp * snoise2(pp);\n    pp *= lacunarity;\n  }\n  return sum;\n\n}\n\nvec4 f(float a, float b, vec2 uvA, vec2 uvB, vec2 uvC) {\n\n  float EDGE = u_EDGE;\n  vec4 EDGE_COLOR = u_EDGE_COLOR;\n\n  vec2 uv;\n  float c = 1.0 - a - b;\n  float ab = abs(a-b);\n  float ac = abs(a-c);\n  float bc = abs(b-c);\n  vec4 color = vec4(1.0, 1.0, 1.0, 1.0);\n  if (a > b && a > c) {\n    if (ab < EDGE || ac < EDGE) color = EDGE_COLOR;\n  }\n  else if (b > c) {\n    if (ab < EDGE || bc < EDGE) color = EDGE_COLOR;\n  }\n  else if (ac < EDGE || bc < EDGE) color = EDGE_COLOR;\n\n  // a += (snoise2(uvA * float(u_N) + vec2(a,b)) + 0.0) / 5.0;\n  c = 1.0 - a - b;\n  if (a > b && a > c) {\n    uv = uvA;\n  }\n  else if (b > c) {\n    uv = uvB;\n  }\n  else {\n    uv = uvC;\n  }\n\n  return color * texture2D(u_map, uv);\n}\n\nvoid main(void) {\n\n  float N = float(u_N);\n  vec2 uv = vec2(floor(v_qr.x) / N, floor(v_qr.y) / N);\n\n  float q = fract(v_qr.x);\n  float r = fract(v_qr.y);\n\n  if (q - r > 0.0) {\n    float a = 1.0 - q;\n    float b = q - r;\n    float c = 1.0 - a - b;\n\n    gl_FragColor = f(a, b, uv, uv + vec2(1.0/N, 0.0), uv + vec2(1.0/N, 1.0/N));\n\n  }\n  else {\n    float a = 1.0 - r;\n    float d = r - q;\n    float c = 1.0 - a - d;\n    gl_FragColor = f(a, c, uv, uv + vec2(1.0/N, 1.0/N), uv + vec2(0.0, 1.0/N));\n  }\n}\n';
 	
 	function compileShader(gl, type, source) {
 	
@@ -11018,37 +11250,19 @@
 	var Grid = exports.Grid = function (_React$Component) {
 	  _inherits(Grid, _React$Component);
 	
-	  function Grid(props) {
+	  function Grid() {
 	    _classCallCheck(this, Grid);
 	
-	    return _possibleConstructorReturn(this, Object.getPrototypeOf(Grid).call(this, props));
-	    // this.map = new Array(N*N);
-	    //
-	    // for (var i = 0;i < N;++i) {
-	    //   for (var j = 0;j < N;++j) {
-	    //     const gray = Math.random() * 256;
-	    //     const r = Math.random() * 256;
-	    //     const g = Math.random() * 256;
-	    //     const b = Math.random() * 256;
-	    //     this.map[ (i * N + j) * 4 + 0] = (/*i == 0 || j == 0? 0 :*/ r);
-	    //     this.map[ (i * N + j) * 4 + 1] = (/*i == 0 || j == 0? 0 :*/ g);
-	    //     this.map[ (i * N + j) * 4 + 2] = (/*i == 0 || j == 0? 0 :*/ b);
-	    //     this.map[ (i * N + j) * 4 + 3] = 255;
-	    //   }
-	    // }
-	    //
-	    // this.map[ (0 * N + 0) * 4 + 0] = 255;
-	    // this.map[ (0 * N + 0) * 4 + 1] = 255;
-	    // this.map[ (0 * N + 0) * 4 + 2] = 255;
+	    return _possibleConstructorReturn(this, Object.getPrototypeOf(Grid).apply(this, arguments));
 	  }
 	
 	  _createClass(Grid, [{
 	    key: 'init',
 	    value: function init(w, h) {
-	      console.log('init: %O %O', this.props, this.canvas);
-	
 	      var canvas = this.canvas;
 	      var gl = canvas.getContext("webgl");
+	
+	      if (!gl) return;
 	
 	      var devicePixelRatio = window.devicePixelRatio || 1;
 	      canvas.width = w * devicePixelRatio;
@@ -11057,12 +11271,14 @@
 	      canvas.style.height = "" + h + "px";
 	      gl.viewport(0, 0, canvas.width, canvas.height);
 	
-	      var values = [
+	      var fullscreenMesh = [
 	      // x, y, q, r
-	      -1, 1, 0, 0, 1, 1, 1, 0, 1, -1, 1, 1, -1, 1, 0, 0, 1, -1, 1, 1, -1, -1, 0, 1];
+	      -1, 1, 0, 0, 1, 1, 1, 0, 1, -1, 1, 1,
+	      // x, y, q, r
+	      -1, 1, 0, 0, 1, -1, 1, 1, -1, -1, 0, 1];
 	      var vertexAttributes = gl.createBuffer();
 	      gl.bindBuffer(gl.ARRAY_BUFFER, vertexAttributes);
-	      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(values), gl.STATIC_DRAW);
+	      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(fullscreenMesh), gl.STATIC_DRAW);
 	
 	      var fragmentShader = compileShader(gl, gl.FRAGMENT_SHADER, fs);
 	      var vertexShader = compileShader(gl, gl.VERTEX_SHADER, vs);
@@ -11084,9 +11300,13 @@
 	      var qr = gl.getAttribLocation(shaderProgram, "a_qr");
 	      gl.enableVertexAttribArray(qr);
 	
+	      if (this.texture) {
+	        gl.deleteTexture(this.texture);
+	        delete this.texture;
+	        delete this.map;
+	      }
 	      this.texture = gl.createTexture();
 	      gl.bindTexture(gl.TEXTURE_2D, this.texture);
-	      // gl.bindTexture(gl.TEXTURE_2D, null);
 	      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
 	      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
 	      gl.activeTexture(gl.TEXTURE0);
@@ -11105,41 +11325,46 @@
 	    value: function update(width, height, _ref) {
 	      var transform = _ref.transform;
 	      var map = _ref.map;
+	      var gridColorStrategy = _ref.gridColorStrategy;
+	      var gridSizeStrategy = _ref.gridSizeStrategy;
 	
 	      var gl = this.canvas.getContext("webgl");
-	      gl.clear(gl.COLOR_BUFFER_BIT);
+	      if (!gl) return;
 	
 	      var m = mat2d.create();
-	      // mat2d.mul(m, transform, m);// qr_transform(width, height));
 	      mat2d.invert(m, transform);
-	
 	      var t = mat3.fromMat2d(mat3.create(), m);
 	      mat3.scale(t, t, [width, height, 1]);
-	      // mat3.fromMat2d(transform, this.props.transform);
+	
 	      gl.uniformMatrix3fv(gl.getUniformLocation(this.shaderProgram, "u_transform"), false, t);
 	
+	      var _vec2$transformMat2d = vec2.transformMat2d([,,], [0, 0], transform);
+	
+	      var _vec2$transformMat2d2 = _slicedToArray(_vec2$transformMat2d, 2);
+	
+	      var x1 = _vec2$transformMat2d2[0];
+	      var y1 = _vec2$transformMat2d2[1];
+	
+	      var _vec2$transformMat2d3 = vec2.transformMat2d([,,], [1, 1], transform);
+	
+	      var _vec2$transformMat2d4 = _slicedToArray(_vec2$transformMat2d3, 2);
+	
+	      var x2 = _vec2$transformMat2d4[0];
+	      var y2 = _vec2$transformMat2d4[1];
+	
+	      var d = Math.sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1));
+	
+	      gl.uniform4f.apply(gl, [gl.getUniformLocation(this.shaderProgram, "u_EDGE_COLOR")].concat(_toConsumableArray(gridColorStrategy())));
+	      gl.uniform1f(gl.getUniformLocation(this.shaderProgram, "u_EDGE"), gridSizeStrategy());
+	
+	      if (!map) return;
 	      if (map != this.map) {
-	        if (map.data) {
-	          console.log('new map: %d, %d', map.width, map.height);
-	          gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, map.width, map.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, map.data);
-	        } else {
-	          gl.bindTexture(gl.TEXTURE_2D, this.texture);
-	          // gl.bindTexture(gl.TEXTURE_2D, null);
-	          gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, map);
-	          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-	          gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-	          gl.activeTexture(gl.TEXTURE0);
-	          gl.uniform1i(gl.getUniformLocation(this.shaderProgram, "u_map"), 0);
-	        }
+	        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, map.width, map.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, map.data);
+	        gl.uniform1i(gl.getUniformLocation(this.shaderProgram, "u_N"), map.width);
 	        this.map = map;
 	      }
 	
-	      try {
-	        // gl.vertexAttribPointer(abc, 3, gl.FLOAT, false, 8 * 4, 4 * 4);
-	        gl.drawArrays(gl.TRIANGLES, 0, 6);
-	      } catch (err) {
-	        console.error(err);
-	      }
+	      gl.drawArrays(gl.TRIANGLES, 0, 6);
 	    }
 	  }, {
 	    key: 'shouldComponentUpdate',
@@ -11159,16 +11384,28 @@
 	  }, {
 	    key: 'componentDidMount',
 	    value: function componentDidMount() {
-	      this.init(this.props.width, this.props.height);
-	      this.update(this.props.width, this.props.height, this.props.model);
+	      var _this2 = this;
+	
+	      this.setupWebGLStateAndResources = function () {
+	        _this2.init(_this2.props.width, _this2.props.height);
+	        _this2.update(_this2.props.width, _this2.props.height, _this2.props.model);
+	      };
+	
+	      this.canvas.addEventListener("webglcontextlost", function (event) {
+	        event.preventDefault();
+	      }, false);
+	
+	      this.canvas.addEventListener("webglcontextrestored", this.setupWebGLStateAndResources, false);
+	
+	      this.setupWebGLStateAndResources();
 	    }
 	  }, {
 	    key: 'render',
 	    value: function render() {
-	      var _this2 = this;
+	      var _this3 = this;
 	
 	      return React.createElement('canvas', { ref: function ref(canvas) {
-	          return _this2.canvas = canvas;
+	          return _this3.canvas = canvas;
 	        }, width: this.props.width, height: this.props.height, style: this.props.style });
 	    }
 	  }]);
